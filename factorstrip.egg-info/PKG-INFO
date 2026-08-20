@@ -1,0 +1,10 @@
+Metadata-Version: 2.4
+Name: factorstrip
+Version: 0.1.0
+Summary: Transparent cross-sectional equity risk decomposition and residual-alpha research.
+Requires-Python: >=3.11
+Requires-Dist: numpy>=1.26
+Requires-Dist: pandas>=2.2
+Requires-Dist: yfinance>=0.2.65
+Requires-Dist: lxml>=5.0
+Requires-Dist: requests>=2.34.2

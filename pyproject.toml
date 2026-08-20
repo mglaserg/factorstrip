@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "factorstrip"
+version = "0.1.0"
+description = "Transparent cross-sectional equity risk decomposition and residual-alpha research."
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.2",
+    "yfinance>=0.2.65",
+    "lxml>=5.0",
+    "requests>=2.34.2",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["factorstrip*"]
