@@ -10,7 +10,150 @@ import requests
 
 SP500_URL = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
 
-def get_sp500_universe(cache_path: str | Path | None = None) -> pd.DataFrame:
+from pathlib import Path
+from typing import Iterable
+
+import pandas as pd
+import yfinance as yf
+
+
+SP500_CSV_URL = (
+    "https://raw.githubusercontent.com/"
+    "datasets/s-and-p-500-companies/"
+    "main/data/constituents.csv"
+)
+
+
+def get_sp500_universe(
+    cache_path: str | Path | None = None,
+) -> pd.DataFrame:
+    """
+    Download the CURRENT S&P 500 constituent table.
+
+    Columns returned:
+        ticker
+        yahoo_ticker
+        company
+        sector
+        industry
+
+    WARNING:
+        Using today's constituents for a historical backtest creates
+        survivorship bias. This is fine for prototyping, but serious
+        historical research should use point-in-time constituents.
+    """
+
+    # ---------------------------------------------------------------
+    # 1. Use local cache if we already downloaded the universe
+    # ---------------------------------------------------------------
+    if cache_path is not None:
+        cache_path = Path(cache_path)
+
+        if cache_path.exists():
+            print(f"Loading cached universe: {cache_path}")
+            return pd.read_csv(cache_path)
+
+    # ---------------------------------------------------------------
+    # 2. Download maintained CSV from GitHub
+    # ---------------------------------------------------------------
+    print("Downloading current S&P 500 universe...")
+
+    try:
+        table = pd.read_csv(SP500_CSV_URL)
+    except Exception as exc:
+        raise RuntimeError(
+            "Could not download the S&P 500 constituent list.\n"
+            f"Source: {SP500_CSV_URL}\n"
+            f"Original error: {exc}"
+        ) from exc
+
+    # ---------------------------------------------------------------
+    # 3. Make sure the source has the columns we expect
+    # ---------------------------------------------------------------
+    required_columns = {
+        "Symbol",
+        "Security",
+        "GICS Sector",
+        "GICS Sub-Industry",
+    }
+
+    missing = required_columns - set(table.columns)
+
+    if missing:
+        raise RuntimeError(
+            f"S&P 500 source is missing columns: {sorted(missing)}"
+        )
+
+    # ---------------------------------------------------------------
+    # 4. Convert source columns to our internal naming
+    # ---------------------------------------------------------------
+    universe = (
+        table[
+            [
+                "Symbol",
+                "Security",
+                "GICS Sector",
+                "GICS Sub-Industry",
+            ]
+        ]
+        .rename(
+            columns={
+                "Symbol": "ticker",
+                "Security": "company",
+                "GICS Sector": "sector",
+                "GICS Sub-Industry": "industry",
+            }
+        )
+        .copy()
+    )
+
+    # ---------------------------------------------------------------
+    # 5. Convert exchange-style tickers to Yahoo-style tickers
+    #
+    # Berkshire:
+    #     BRK.B -> BRK-B
+    #
+    # Brown-Forman:
+    #     BF.B -> BF-B
+    # ---------------------------------------------------------------
+    universe["yahoo_ticker"] = (
+        universe["ticker"]
+        .str.replace(".", "-", regex=False)
+    )
+
+    universe = universe[
+        [
+            "ticker",
+            "yahoo_ticker",
+            "company",
+            "sector",
+            "industry",
+        ]
+    ]
+
+    # ---------------------------------------------------------------
+    # 6. Save locally so future runs do not need network access
+    # ---------------------------------------------------------------
+    if cache_path is not None:
+        cache_path.parent.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        universe.to_csv(
+            cache_path,
+            index=False,
+        )
+
+        print(
+            f"Saved {len(universe)} securities "
+            f"to {cache_path}"
+        )
+
+    return universe
+
+
+def get_sp500_universe_requests(cache_path: str | Path | None = None) -> pd.DataFrame:
     """
     Download the CURRENT S&P 500 constituent table.
 
