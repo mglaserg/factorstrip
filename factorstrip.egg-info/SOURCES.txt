@@ -1,7 +1,10 @@
+FACTORSTRIP_V2_GATE.md
 README.md
 pyproject.toml
+run_feasibility_gate.py
 factorstrip/__init__.py
 factorstrip/data.py
+factorstrip/feasibility.py
 factorstrip/metrics.py
 factorstrip/model.py
 factorstrip/portfolio.py
@@ -11,4 +14,12 @@ factorstrip.egg-info/SOURCES.txt
 factorstrip.egg-info/dependency_links.txt
 factorstrip.egg-info/requires.txt
 factorstrip.egg-info/top_level.txt
+factorstrip/tlaq/__init__.py
+factorstrip/tlaq/dependency.py
+factorstrip/tlaq/loader.py
+factorstrip/tlaq/overlay.py
+factorstrip/tlaq/report.py
+factorstrip/tlaq/risk.py
+tests/test_feasibility.py
 tests/test_model.py
+tests/test_tlaq.py

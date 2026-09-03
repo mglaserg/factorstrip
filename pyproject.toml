@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "factorstrip"
-version = "0.1.0"
+version = "0.3.0"
 description = "Transparent cross-sectional equity risk decomposition and residual-alpha research."
 requires-python = ">=3.11"
 dependencies = [
@@ -13,6 +13,12 @@ dependencies = [
     "yfinance>=0.2.65",
     "lxml>=5.0",
     "requests>=2.34.2",
+    "polars>=1.20",
+]
+
+[project.optional-dependencies]
+reference = [
+    "toraniko",
 ]
 
 [tool.setuptools.packages.find]

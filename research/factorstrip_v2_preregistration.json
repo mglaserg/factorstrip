@@ -1,0 +1,39 @@
+{
+  "status": "LOCKED_DRAFT_NOT_YET_REGISTERED_IN_EDGELAB",
+  "program": "FactorStrip V2",
+  "hypothesis": "After identical ex-ante risk controls, 12-1 factor-residual momentum contains incremental cross-sectional information beyond 12-1 raw momentum.",
+  "primary_signal": "12-1 residual momentum standardized by residual volatility",
+  "secondary_signal": "6-1 residual momentum standardized by residual volatility",
+  "registered_trials": 2,
+  "portfolio_comparison": "raw and residual arms receive identical beta/sector/gross/net/liquidity/volatility controls",
+  "primary_statistic": "net spanning-regression alpha of residual arm conditional on raw arm",
+  "primary_economic_hurdle": {
+    "annual_incremental_alpha": 0.03,
+    "target_volatility": 0.10
+  },
+  "mechanism_statistic": "paired cross-sectional IC difference: residual minus raw",
+  "secondary_statistics": [
+    "delta Sharpe",
+    "turnover",
+    "realized beta",
+    "sector/style exposure",
+    "drawdown"
+  ],
+  "inference": {
+    "desired_power": 0.80,
+    "family_significance": 0.05,
+    "trial_accounting": "two registered momentum specifications; DSR/multiple-testing adjustment required",
+    "paired_dependence": "block/HAC-aware inference"
+  },
+  "costs": {
+    "primary_bps_per_unit_turnover": 5.0,
+    "sensitivity_bps": [2.0, 10.0]
+  },
+  "precommitted_outcomes": {
+    "A": "alpha <= 0: stop residual momentum as an alpha transformation",
+    "B": "alpha > 0 and delta Sharpe > 0: residual momentum may replace raw momentum",
+    "C": "alpha > 0 and delta Sharpe < 0: keep raw core; allocate 25% of portfolio risk budget to incremental FactorStrip sleeve",
+    "D": "alpha <= 0 and delta Sharpe > 0: portfolio engineering only; do not claim new alpha"
+  },
+  "holdout_rule": "Do not run inferential alpha/Sharpe/IC evaluation on the clean PIT dataset until this design is formally registered in EdgeLab."
+}

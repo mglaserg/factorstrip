@@ -1,5 +1,9 @@
 # FactorStrip
 
+> **V2 status (2026-09-03): feasibility gate passed; research build active.** The exploratory V1 is frozen at `factorstrip-v1-freeze`. V1 Sharpe results remain exploratory. See `FACTORSTRIP_V2_GATE.md` and `FACTORSTRIP_V2_BUILD.md`.
+
+> **V2 gate result (2026-09-03): research build GREENLIT.** The blinded survivor-universe measurement produced rho=0.9419, lower 95% block-CI rho=0.9177, and a 16.7-year prospective clean-history requirement under the frozen 3%/10%/80%-power design. This is a feasibility result, not alpha evidence. See `FACTORSTRIP_V2_BUILD.md`.
+
 A deliberately transparent cross-sectional equity risk model and
 residual-alpha research sandbox.
 

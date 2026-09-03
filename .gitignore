@@ -5,4 +5,6 @@ __pycache__/
 output/
 data/*.csv
 .DS_Store
-*.csv
+*.csvfeasibility_output/
+canonical_data/
+data/**/*.parquet
