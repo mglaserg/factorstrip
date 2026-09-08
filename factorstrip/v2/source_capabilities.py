@@ -48,3 +48,29 @@ NORGATE_US_PLATINUM = DataSourceCapabilities(
         "Python GICS classification calls are documented as security metadata, not a historical PIT classification series.",
     ),
 )
+
+
+# RW R1000 was audited locally before the clean inferential run.  PIT membership,
+# former constituents, adjusted daily OHLCV, and PIT market-cap/value fields are
+# present with strong daily coverage.  We remain conservative on fields the
+# archive does not explicitly document: ticker strings are not a vendor-stable
+# permanent identifier and terminal/delisting return treatment is not separately
+# exposed in the audited files.
+ROBOT_WEALTH_R1000 = DataSourceCapabilities(
+    name="Robot Wealth R1000 PIT archive",
+    stable_asset_ids=False,
+    includes_delisted_names=True,
+    terminal_delisting_economics=False,
+    pit_major_exchange_status=False,
+    pit_sector_industry=False,
+    raw_dollar_turnover=True,
+    history_start_year=1998,
+    notes=(
+        "Audited OHLC: 9,438,170 rows, 2,908 historical tickers, 1998-01-02 through 2021-04-01.",
+        "Audited PIT membership retained 1,674 former constituents.",
+        "Audited fundamentals: daily market cap and price-to-book with ~98.9% median and ~95.1% fifth-percentile active coverage.",
+        "Undated metadata is descriptive only and is not used as PIT sector exposure in the primary model.",
+        "RW ticker keys include historical suffixes but are not documented here as permanent security identifiers.",
+        "Terminal/delisting economics are not separately exposed by the audited R1000 files and must be resolved before final inference.",
+    ),
+)

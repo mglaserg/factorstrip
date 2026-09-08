@@ -79,12 +79,11 @@ def solve_wls(y: np.ndarray, x: np.ndarray, weights: np.ndarray | None = None) -
 
 
 class CrossSectionalFactorEngine:
-    """Authoritative V2 daily factor/residual engine.
+    """Independent V2 cross-sectional correctness/reference engine.
 
-    Input/output is Polars; the small linear-algebra kernel is NumPy.  Every day
-    is a cross-sectional WLS on lagged exposures.  Residuals are therefore
-    orthogonal to the modeled exposure span by construction (under the chosen
-    weights), unlike a simple time-series beta subtraction.
+    Input/output is Polars; the small linear-algebra kernel is NumPy.  This engine
+    remains useful for toy/golden cross-checks, while Toraniko is the primary
+    Market+Size+Value production estimator for the RW R1000 experiment.
     """
 
     def __init__(self, config: FactorEngineConfig | None = None):

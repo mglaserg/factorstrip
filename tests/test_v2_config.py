@@ -8,6 +8,9 @@ def test_research_design_is_frozen_at_registered_hurdles():
     assert design.target_vol == 0.10
     assert design.registered_trials == 2
     assert design.case_c_incremental_risk_budget == 0.25
+    assert design.primary_universe == "Robot Wealth R1000 point-in-time membership"
+    assert "market + size + value" in design.primary_factor_model.lower()
+    assert design.characteristic_coverage_floor == 0.90
 
 
 def test_universe_has_no_index_membership_parameter():

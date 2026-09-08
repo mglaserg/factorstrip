@@ -60,6 +60,9 @@ class ResearchDesign:
     secondary_statistic: str = "delta Sharpe"
     case_c_incremental_risk_budget: float = 0.25
     transaction_cost_bps: float = 5.0
+    primary_universe: str = "Robot Wealth R1000 point-in-time membership"
+    primary_factor_model: str = "Toraniko market + size + value (no momentum; no undated sectors)"
+    characteristic_coverage_floor: float = 0.90
 
     def validate(self) -> None:
         if self.registered_trials != 2:
@@ -76,6 +79,8 @@ class ResearchDesign:
             raise ValueError("case_c_incremental_risk_budget must be between 0 and 1")
         if self.transaction_cost_bps < 0:
             raise ValueError("transaction_cost_bps must be non-negative")
+        if not 0 < self.characteristic_coverage_floor <= 1:
+            raise ValueError("characteristic_coverage_floor must be in (0, 1]")
 
     def to_dict(self) -> dict[str, Any]:
         self.validate()

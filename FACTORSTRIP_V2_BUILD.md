@@ -1,104 +1,122 @@
-# FactorStrip V2 — Greenlit Build
+# FactorStrip V2 — Robot Wealth PIT Build
 
-The blinded gate returned `rho_used_for_power = 0.9177` and a prospective
-requirement of about 200 clean monthly observations (16.7 years) under the
-frozen 3%/10%/80%-power design.  That greenlights the *research build*; it does
-not validate residual momentum.
+The blinded feasibility gate greenlit the research build. The subsequent RW
+R1000 data audit established a usable point-in-time research archive without
+looking at alpha, Sharpe, IC, CAGR, drawdown, or strategy P&L.
 
-## Architecture now in the repo
+## Audited source facts
 
-### 1. Canonical PIT data boundary
+The local Robot Wealth R1000 archive showed:
 
-`factorstrip.v2.store.CanonicalStore` persists two source-neutral Parquet tables:
+- OHLC: 9,438,170 rows, 2,908 historical tickers, 1998-01-02 through 2021-04-01
+- 1,674 historical constituents that were no longer members at the dataset end
+- PIT `is_universe` membership with roughly 1,000 active members through time
+- zero nulls in OHLC/volume/membership fields
+- fundamentals: 8,857,090 rows, 2,806 tickers, 1998-12-01 through 2021-04-01
+- daily market cap with no source nulls
+- active-characteristic coverage: ~98.9% median and ~95.1% fifth percentile
 
-- `bars.parquet`: stable asset ID, historical symbol, unadjusted price/volume,
-  and one-period total return
-- `security_history.parquet`: source identity plus common-stock and historical
-  major-exchange eligibility fields. PIT sector/industry classifications are
-  treated as a separate factor-exposure input rather than silently backfilled.
+The primary V2 research sample uses RW's historical `is_universe == 1` flag.
+Undated sector metadata is **not** used as a historical exposure.
 
-Vendor adapters should end here.  Strategy/factor code should never call a data
-vendor directly.
+One final source issue remains deliberately open before inferential evaluation:
+terminal/delisting economics are not separately exposed/documented by the files
+we audited. The build may construct factor residuals and signals, but the clean
+alpha/Sharpe/IC experiment remains locked until that policy is resolved and the
+EdgeLab registration is final.
 
-A stable `asset_id` is mandatory because tickers change.  Delisted names must
-remain in the historical store.  `total_return` must preserve terminal/delisting
-economics supplied by the vendor.
+## Primary factor model
 
-### 2. Mechanical PIT universe
+FactorStrip now uses Toraniko as the primary daily cross-sectional estimator.
+The model is intentionally small:
 
-`build_mechanical_universe` deliberately does **not** consume S&P 500 membership.
-Defaults are a $5 lagged price floor, 63-day ADV, $5m minimum ADV, at least 252
-observations, major-exchange/common-stock flags, and top 3000 by lagged ADV.
-These are configuration values to freeze in EdgeLab before the clean run.
-
-### 3. Reference implementations
-
-- `blitz_residual_momentum_reference`: independent pandas/numpy methodology
-  reference with a 36-month FF3 OLS **with intercept**, 12-1 formation, and
-  residual-vol standardization. It is a canary, not a paper replication.
-- `estimate_toraniko_reference`: optional Toraniko comparison path. Toraniko is
-  not authoritative and remains Polars-native.
-- `golden.py`: stable output hashes for a fixed reference sample.
-
-### 4. Authoritative FactorStrip engine
-
-`CrossSectionalFactorEngine` takes Polars long-form returns/exposures and runs a
-daily cross-sectional WLS:
-
-```
-r_t = X_{t-1} f_t + epsilon_t
+```text
+Market + Size + Value
 ```
 
-The NumPy WLS kernel exposes `X'W epsilon` as an explicit diagnostic.  The V2
-engine therefore tests the thing the project claims to do: strip the modeled
-exposure span cross-sectionally on each date.
+- All size/value characteristics are lagged one prior trading observation before explaining day-t returns
+- Market: Toraniko's constrained common factor
+- Size: 1% cross-sectional winsorization and z-score of `-log(market_cap)`
+- Value: 1% cross-sectional winsorization and z-score of `log(1 / price_to_book)`; invalid/non-positive observations receive neutral exposure 0 rather than removing the stock
+- Momentum: explicitly excluded because momentum is the signal under test
+- Sector: explicitly excluded because the audited RW sector metadata is undated
 
-`estimate_market_betas` estimates beta using observations strictly before each
-return and supports fixed shrinkage toward a prior.  The raw-vs-shrunk beta
-comparison remains a formal falsifier for beta-estimation-error momentum.
+A single synthetic `ALL` sector bucket is passed to Toraniko so its constrained
+market/sector machinery reduces to a market factor with a zero sector return.
+Styles are residualized against that common component.
 
-### 5. Research lock
+The existing `CrossSectionalFactorEngine` remains an independent correctness and
+golden-test implementation; it is no longer the production V2 estimator.
 
-`research/factorstrip_v2_preregistration.json` is a locked draft of the final
-EdgeLab registration.  It intentionally contains no measured alpha/Sharpe/IC.
-Do not run the clean PIT inferential experiment until the design is registered
-in EdgeLab.
+## Blinded signal construction
 
-## Data-source implication
+The build creates, but does not evaluate:
 
-For Norgate, the required delisted-US-equity capability is currently in the
-Platinum/Diamond US packages.  The Python integration is Windows-local through
-Norgate Data Updater, which is why this repo treats Norgate as an ingestion
-adapter rather than an application-wide dependency.
+- 12-1 raw momentum
+- 12-1 residual momentum standardized by pooled daily residual volatility
+- 6-1 raw momentum
+- 6-1 residual momentum standardized by pooled daily residual volatility
 
-## Install V2 dependencies
+For 12-1, signal month `t` uses months `t-12 ... t-2`, skipping `t-1`.
+No forward return is joined in this path.
 
+## Install
+
+The legacy Feather V1 source can be read directly through PyArrow, but converting
+once to Parquet is preferred.
+
+```powershell
+uv sync --extra rw
 ```
-uv sync
+
+The existing `uv.lock` may need to be refreshed on a networked machine because
+the execution environment used to prepare this patch cannot resolve packages.
+
+## Run
+
+Using Parquet:
+
+```powershell
+uv run python run_v2_rw_build.py `
+  --ohlc C:\path\R1000_ohlc_1d.parquet `
+  --fundamentals C:\path\R1000_fundamentals_1d.parquet `
+  --out v2_rw_output
 ```
 
-The V2 core adds Polars.  Toraniko is optional:
+Legacy Feather V1 paths are also accepted if the `rw` extra is installed.
 
+For ingestion/coverage only:
+
+```powershell
+uv run python run_v2_rw_build.py `
+  --ohlc C:\path\R1000_ohlc_1d.parquet `
+  --fundamentals C:\path\R1000_fundamentals_1d.parquet `
+  --out v2_rw_output `
+  --prepare-only
 ```
-uv sync --extra reference
+
+## Outputs
+
+The build writes only research inputs/diagnostics:
+
+```text
+rw_r1000_panel.parquet
+rw_r1000_coverage.parquet
+toraniko_factor_returns.parquet
+toraniko_residuals.parquet
+momentum_signals_12_1.parquet
+momentum_signals_6_1.parquet
+build_manifest.json
 ```
 
-## Next concrete milestone
+`build_manifest.json` records file hashes and explicitly lists the metrics this
+path is forbidden to calculate.
 
-1. select/install the delisting-complete source and resolve its capability blockers
-2. write its adapter into the canonical Parquet contract
-3. run **data quality / coverage only** (`run_v2_data_audit.py`)
-4. freeze mechanical-universe parameters in EdgeLab
-5. generate and hash the Blitz/reference canary sample
-6. validate FactorStrip vs Toraniko on equivalent simple exposures
-7. formally register the real experiment before exposing inferential metrics
+## Next gate
 
-## Data-source certification
-
-`factorstrip.v2.source_capabilities` records source capabilities explicitly.
-Norgate US Platinum is **not silently certified** for the full sector model: it
-has stable IDs, delisted names, raw dollar turnover, and historical major-
-exchange status, but Norgate documents no delisting-return field and does not
-document a PIT GICS classification series in the Python metadata API. Those
-items must be resolved by policy/augmentation or a different source before the
-clean inferential run.
+1. run this build on the audited RW files
+2. inspect **coverage, factor/residual correctness, and hashes only**
+3. generate the Blitz/golden canary and Toraniko-vs-reference toy checks
+4. resolve/document terminal-delisting return treatment
+5. formally register `research/factorstrip_v2_preregistration.json` in EdgeLab
+6. only then expose alpha, paired IC, delta Sharpe, or P&L

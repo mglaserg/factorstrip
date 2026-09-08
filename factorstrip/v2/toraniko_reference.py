@@ -20,11 +20,10 @@ def estimate_toraniko_reference(
     winsor_factor: float = 0.10,
     residualize_styles: bool = False,
 ):
-    """Thin, optional Toraniko comparison path.
+    """Legacy thin Toraniko call retained for compatibility.
 
-    FactorStrip does not make Toraniko authoritative.  This adapter is a
-    cross-check: when both engines are fed equivalent exposures, large
-    unexplained disagreements should be investigated.
+    The primary V2 RW path now lives in `toraniko_engine.py`; this function is
+    kept for independent/reference calls and older notebooks.
     """
 
     try:

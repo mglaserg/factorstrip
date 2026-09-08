@@ -1,11 +1,31 @@
 {
   "status": "LOCKED_DRAFT_NOT_YET_REGISTERED_IN_EDGELAB",
   "program": "FactorStrip V2",
-  "hypothesis": "After identical ex-ante risk controls, 12-1 factor-residual momentum contains incremental cross-sectional information beyond 12-1 raw momentum.",
-  "primary_signal": "12-1 residual momentum standardized by residual volatility",
-  "secondary_signal": "6-1 residual momentum standardized by residual volatility",
+  "hypothesis": "After identical ex-ante portfolio risk controls, 12-1 Market+Size+Value factor-residual momentum contains incremental cross-sectional information beyond 12-1 raw momentum.",
+  "data": {
+    "source": "Robot Wealth R1000 PIT archive",
+    "raw_ohlc_history": "1998-01-02 through 2021-04-01",
+    "fundamentals_history": "1998-12-01 through 2021-04-01",
+    "universe": "RW historical R1000 is_universe == 1",
+    "characteristic_coverage_floor": 0.90,
+    "sector_policy": "Undated metadata sectors are prohibited from the primary historical factor model",
+    "remaining_source_blocker": "Terminal/delisting economics must be documented or given an explicit conservative policy before inferential evaluation"
+  },
+  "factor_model": {
+    "engine": "Toraniko constrained cross-sectional model",
+    "factors": ["market", "size", "value"],
+    "size": "cross-sectional winsorized z-score of -log(market_cap)",
+    "value": "cross-sectional winsorized z-score of log(1/price_to_book); non-positive/missing book-to-price receives neutral score 0 after centering",
+    "momentum_factor": "excluded because momentum is the signal under test",
+    "sector_factor": "excluded because audited RW metadata is undated",
+    "exposure_information_lag": "one prior trading observation per ticker",
+    "return_winsorization": 0.01,
+    "style_residualization": true
+  },
+  "primary_signal": "12-1 residual momentum standardized by pooled daily residual volatility over the formation window",
+  "secondary_signal": "6-1 residual momentum standardized by pooled daily residual volatility over the formation window",
   "registered_trials": 2,
-  "portfolio_comparison": "raw and residual arms receive identical beta/sector/gross/net/liquidity/volatility controls",
+  "portfolio_comparison": "raw and residual arms receive identical ex-ante beta/gross/net/liquidity/volatility controls; no hindsight sector constraint is permitted",
   "primary_statistic": "net spanning-regression alpha of residual arm conditional on raw arm",
   "primary_economic_hurdle": {
     "annual_incremental_alpha": 0.03,
@@ -16,7 +36,7 @@
     "delta Sharpe",
     "turnover",
     "realized beta",
-    "sector/style exposure",
+    "size/value exposure",
     "drawdown"
   ],
   "inference": {

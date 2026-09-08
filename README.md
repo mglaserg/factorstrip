@@ -141,3 +141,20 @@ universe with point-in-time constituent membership.
 10. Walk-forward / out-of-sample research.
 
 The point is to add these only after the simple model behaves correctly.
+
+## V2 Robot Wealth research path
+
+The active V2 path uses the audited Robot Wealth point-in-time Russell 1000
+archive. It intentionally does **not** use the undated RW sector metadata in the
+historical factor model. The primary model is Toraniko Market + Size + Value;
+momentum is excluded because residual momentum is the signal being tested.
+
+Build the blinded factor/residual/signal artifacts with:
+
+```powershell
+uv sync --extra rw
+uv run python run_v2_rw_build.py --ohlc R1000_ohlc_1d.parquet --fundamentals R1000_fundamentals_1d.parquet
+```
+
+See `FACTORSTRIP_V2_BUILD.md`. This path remains forbidden from reporting alpha,
+Sharpe, IC, CAGR, drawdown, or P&L until the EdgeLab registration is final.

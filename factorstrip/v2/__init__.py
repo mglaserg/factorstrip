@@ -7,5 +7,7 @@ EdgeLab preregistration gate.
 """
 
 from .config import ResearchDesign, UniverseConfig
+from .rw_r1000 import RwR1000Config
+from .styles import StyleConfig
 
-__all__ = ["ResearchDesign", "UniverseConfig"]
+__all__ = ["ResearchDesign", "UniverseConfig", "RwR1000Config", "StyleConfig"]
