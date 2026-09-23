@@ -1,0 +1,56 @@
+{
+  "status": "BLINDED_BUILD_ONLY",
+  "source": "Robot Wealth R1000 PIT",
+  "model": "Toraniko market + size + value; momentum excluded",
+  "coverage_floor": 0.9,
+  "panel_rows": 5361673,
+  "panel_start": "1998-12-02",
+  "panel_end": "2021-04-01",
+  "unique_tickers": 2563,
+  "files": {
+    "panel": {
+      "path": "v2_rw_output\\rw_r1000_panel.parquet",
+      "sha256": "57266e294ded5cf76bda99ab88e3ba1537dbaa2db3da1ea0dd71531d6ad460aa"
+    },
+    "coverage": {
+      "path": "v2_rw_output\\rw_r1000_coverage.parquet",
+      "sha256": "d011102901614cba6ba91737185696799669cb1b636670e8987824dc5e4cf785"
+    },
+    "factor_returns": {
+      "path": "v2_rw_output\\toraniko_factor_returns.parquet",
+      "sha256": "e95d9c42cd7c767cbc696e76e0ac0349aadd752a7209f82d839ef77d49f21172"
+    },
+    "residuals": {
+      "path": "v2_rw_output\\toraniko_residuals.parquet",
+      "sha256": "ae2981b0dc9971d640a7d61f3d37598bae0640b87fc97dd9897dd3e6adbe2732"
+    },
+    "signals_12-1": {
+      "path": "v2_rw_output\\momentum_signals_12_1.parquet",
+      "sha256": "6a1fe4d81be4ed7ad9f9dd6e3c668eafbce71aab58d0ee6f70fd6e62c91910e6"
+    },
+    "signals_6-1": {
+      "path": "v2_rw_output\\momentum_signals_6_1.parquet",
+      "sha256": "fcb7d3bff476b0407665659d46893218a97e4561bb510d5853dd90d60b002f03"
+    }
+  },
+  "forbidden_metrics": [
+    "alpha",
+    "cagr",
+    "drawdown",
+    "ic",
+    "pnl",
+    "sharpe"
+  ],
+  "signal_coverage": {
+    "12-1": {
+      "rows": 117085,
+      "months": 257,
+      "tickers": 786
+    },
+    "6-1": {
+      "rows": 122856,
+      "months": 263,
+      "tickers": 863
+    }
+  }
+}

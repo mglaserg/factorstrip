@@ -3,3 +3,11 @@ pandas>=2.2
 yfinance>=0.2.65
 lxml>=5.0
 requests>=2.34.2
+polars>=1.20
+
+[reference]
+toraniko
+
+[rw]
+toraniko
+pyarrow>=15
