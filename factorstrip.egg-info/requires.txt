@@ -4,6 +4,7 @@ yfinance>=0.2.65
 lxml>=5.0
 requests>=2.34.2
 polars>=1.20
+tabulate>=0.10.0
 
 [reference]
 toraniko

@@ -14,6 +14,11 @@ factorstrip.egg-info/SOURCES.txt
 factorstrip.egg-info/dependency_links.txt
 factorstrip.egg-info/requires.txt
 factorstrip.egg-info/top_level.txt
+factorstrip/crypto_pump/__init__.py
+factorstrip/crypto_pump/binance.py
+factorstrip/crypto_pump/config.py
+factorstrip/crypto_pump/factors.py
+factorstrip/crypto_pump/study.py
 factorstrip/tlaq/__init__.py
 factorstrip/tlaq/dependency.py
 factorstrip/tlaq/loader.py
@@ -35,6 +40,8 @@ factorstrip/v2/styles.py
 factorstrip/v2/toraniko_engine.py
 factorstrip/v2/toraniko_reference.py
 factorstrip/v2/universe.py
+tests/test_crypto_pump.py
+tests/test_crypto_pump_binance.py
 tests/test_feasibility.py
 tests/test_model.py
 tests/test_tlaq.py

@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
 
 from factorstrip.crypto_pump import PumpConfig, run_crypto_pump_study
 from factorstrip.crypto_pump.binance import (
+    BinanceLiveAccessError,
     discover_current_usdt_perpetuals,
-    download_recent_panel,
+    download_archive_panel,
+    starter_usdt_perpetuals,
 )
 from factorstrip.crypto_pump.study import write_study
 
@@ -22,6 +25,35 @@ def _read_panel(path: Path) -> pd.DataFrame:
     raise ValueError("input must be .csv, .csv.gz, .parquet, or .pq")
 
 
+def _read_symbols_file(path: Path) -> list[str]:
+    values = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.split("#", 1)[0].strip()
+        if not line:
+            continue
+        values.extend(x.strip().upper() for x in line.replace(",", " ").split() if x.strip())
+    return values
+
+
+def _ensure_anchors(symbols: list[str]) -> list[str]:
+    symbols = list(dict.fromkeys(s.upper() for s in symbols))
+    for anchor in reversed(("BTCUSDT", "ETHUSDT")):
+        if anchor not in symbols:
+            symbols.insert(0, anchor)
+    return symbols
+
+
+def _parse_end(value: str | None):
+    if value is None:
+        return None
+    ts = pd.Timestamp(value)
+    if ts.tzinfo is None:
+        ts = ts.tz_localize("UTC")
+    else:
+        ts = ts.tz_convert("UTC")
+    return ts.to_pydatetime()
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description="FactorStrip crypto residual-pump study")
     src = p.add_mutually_exclusive_group(required=True)
@@ -29,11 +61,28 @@ def build_parser() -> argparse.ArgumentParser:
     src.add_argument(
         "--download-binance",
         action="store_true",
-        help="Download a recent exploratory Binance USD-M universe (not PIT-safe)",
+        help="Download Binance USD-M 1h klines from the public historical archive",
     )
     p.add_argument("--symbols", help="Comma-separated Binance symbols; BTCUSDT/ETHUSDT are added if absent")
-    p.add_argument("--discover", type=int, default=40, help="Current high-volume contracts when downloading")
+    p.add_argument("--symbols-file", type=Path, help="Text file containing symbols separated by spaces, commas, or lines")
+    p.add_argument(
+        "--discover",
+        type=int,
+        default=40,
+        help="Use N symbols from FactorStrip's deterministic archive research universe (no live REST call)",
+    )
+    p.add_argument(
+        "--live-discover",
+        action="store_true",
+        help="Explicitly try Binance live Futures REST for current high-volume symbols; may return HTTP 451 by region",
+    )
     p.add_argument("--days", type=int, default=120)
+    p.add_argument(
+        "--archive-end",
+        help="Exclusive UTC end date/time. Default: start of current UTC month (completed monthly archives only)",
+    )
+    p.add_argument("--cache-dir", type=Path, default=Path("data/binance_archive_cache"))
+    p.add_argument("--workers", type=int, default=8)
     p.add_argument("--raw-threshold", type=float, default=0.50)
     p.add_argument("--residual-threshold", type=float, default=0.30)
     p.add_argument("--min-qv-24h", type=float, default=5_000_000.0)
@@ -49,16 +98,55 @@ def main() -> None:
     if args.input:
         panel = _read_panel(args.input)
     else:
+        if args.symbols and args.symbols_file:
+            raise SystemExit("Use either --symbols or --symbols-file, not both.")
+
         if args.symbols:
             symbols = [s.strip().upper() for s in args.symbols.split(",") if s.strip()]
-            for anchor in ("BTCUSDT", "ETHUSDT"):
-                if anchor not in symbols:
-                    symbols.insert(0, anchor)
+        elif args.symbols_file:
+            symbols = _read_symbols_file(args.symbols_file)
+        elif args.live_discover:
+            try:
+                symbols = discover_current_usdt_perpetuals(args.discover)
+            except BinanceLiveAccessError as exc:
+                print(f"WARNING: {exc}")
+                print("Falling back to FactorStrip's deterministic archive research universe.")
+                symbols = starter_usdt_perpetuals(args.discover)
         else:
-            symbols = discover_current_usdt_perpetuals(args.discover)
-            print("WARNING: --discover uses today's listed/liquid contracts and is exploratory only; it is not a point-in-time historical universe.")
-        print(f"Downloading {len(symbols)} symbols for {args.days} days...")
-        panel = download_recent_panel(symbols, args.days)
+            symbols = starter_usdt_perpetuals(args.discover)
+            print(
+                "NOTE: --discover now means a deterministic archive research universe; "
+                "it does NOT call Binance live Futures REST and is not PIT-safe membership."
+            )
+
+        symbols = _ensure_anchors(symbols)
+        archive_end = _parse_end(args.archive_end)
+        print(
+            f"Downloading {len(symbols)} symbols for {args.days} days from "
+            "Binance public USD-M monthly archives..."
+        )
+        panel, missing = download_archive_panel(
+            symbols,
+            args.days,
+            end=archive_end,
+            cache_dir=args.cache_dir,
+            workers=args.workers,
+        )
+        if missing:
+            preview = ", ".join(missing[:15])
+            more = "..." if len(missing) > 15 else ""
+            print(f"Skipped {len(missing)} symbols with no archive data in range: {preview}{more}")
+        if panel.empty:
+            raise SystemExit(
+                "No Binance archive rows were downloaded. Try explicit --symbols, a different "
+                "--archive-end, or use --input with an existing hourly panel."
+            )
+        present = set(panel["symbol"].unique())
+        required = {"BTCUSDT", "ETHUSDT"}
+        if not required.issubset(present):
+            raise SystemExit(
+                f"Archive panel is missing required factors: {sorted(required - present)}"
+            )
         args.output.mkdir(parents=True, exist_ok=True)
         panel.to_csv(args.output / "input_panel.csv.gz", index=False)
 

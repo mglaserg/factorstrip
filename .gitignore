@@ -10,3 +10,4 @@ feasibility_output/
 canonical_data/
 data/**/*.parquet
 *.parquet
+*.feather

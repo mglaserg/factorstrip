@@ -9,6 +9,7 @@ Requires-Dist: yfinance>=0.2.65
 Requires-Dist: lxml>=5.0
 Requires-Dist: requests>=2.34.2
 Requires-Dist: polars>=1.20
+Requires-Dist: tabulate>=0.10.0
 Provides-Extra: reference
 Requires-Dist: toraniko; extra == "reference"
 Provides-Extra: rw
