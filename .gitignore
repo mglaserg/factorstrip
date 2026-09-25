@@ -11,3 +11,4 @@ canonical_data/
 data/**/*.parquet
 *.parquet
 *.feather
+*.zip
